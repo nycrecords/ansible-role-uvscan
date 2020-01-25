@@ -1,0 +1,26 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+
+  vars:
+    # Role: yum_config_manager
+    repositories:
+      enabled:
+        - rhui-REGION-rhel-server-rhscl
+        - rhui-REGION-rhel-server-debug-rhscl
+
+    # Role: java
+    java_home: /usr/lib/jvm/jre-1.8.0-openjdk
+
+    # Role: Solr
+    solr_version: 7.7.2
+    solr_remove_cruft: true
+    solr_xms: "128M"
+    solr_xmx: "128M"
+    solr_timezone: "EST"
+
+  roles:
+    - role: nycrecords.rhsm
+    - role: nycrecords.java
+    - role: ansible-role-solr

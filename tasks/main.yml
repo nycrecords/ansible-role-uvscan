@@ -1,0 +1,46 @@
+---
+- name: Install pre-requisites
+  yum:
+    name:
+      - expect
+      - unzip
+      - ftp
+    state: present
+
+- name: Create temporary dir for installer.
+  file:
+    path: "/tmp/vscl/"
+    state: directory
+    mode: '0755'
+
+- name: Download and extract McAfee Virus Scan for Enterprise Linux
+  get_url:
+    url: "{{ uvscan_download_url }}"
+    dest: "/tmp/vscl/"
+  register: mcafee_download
+
+- name: Extract McAfee VSCL
+  unarchive:
+    src: "{{ mcafee_download.dest }}"
+    dest: "/tmp/vscl/"
+    remote_src: yes
+
+- name: Install McAfee VSCL
+  shell: 
+    cmd: ./install-uvscan -y
+    chdir: "/tmp/vscl/"
+
+- name: Copy update script
+  template:
+    src: templates/mcafee_update.sh.j2
+    dest: /usr/local/uvscan/mcafee_update.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Setup Update CronJob
+  cron:
+    name: "Update McAfee DAT Files"
+    minute: "0"
+    hour: "3"
+    job: "/usr/local/uvscan/mcafee_update.sh"
