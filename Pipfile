@@ -4,10 +4,16 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+flake8-black = "*"
+black = "*"
+flake8 = "*"
 
 [packages]
-molecule = {extras = ["ec2", "vagrant"],version = "*"}
+molecule = {extras = ["ec2", "vagrant"],version = "<=2.22"}
 awscli = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

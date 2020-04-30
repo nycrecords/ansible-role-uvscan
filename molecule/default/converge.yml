@@ -3,7 +3,7 @@
   hosts: all
   become: true
 
-  vars:    
+  vars:
     # Role: rhsm
     rhsm_username: "{{ lookup('env', 'RHSM_USERNAME') }}"
     rhsm_password: "{{ lookup('env', 'RHSM_PASSWORD') }}"

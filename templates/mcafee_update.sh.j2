@@ -77,22 +77,19 @@ GetCurrentDATVersion() {
 # Function to download a specified file from ftp.mcafee.com
 # $1 - Path on ftp server
 # $2 - name of file to download.
-# $3 - download type (either bin or ascii)
+# $3 - download type (either or ascii)
 # $4 - download directory
 DownloadFile() {
-    [ "$3" = "bin" -o "$3" = "ascii" ] || return 1
-    dtype="$3"
     # An e-mail address must be set in this environment variable
     [ -n "$EMAIL_ADDRESS" ] || return 1
     print_debug "downloading file '$2' into '$4'"
     echo "
-open ftp.mcafee.com
+set xfer:clobber on
 user anonymous $EMAIL_ADDRESS
 cd $1
 lcd $4
-$dtype
-get $2
-" | ftp -i -n || return 1
+get -e $3 $2
+" | lftp ftp://ftp.mcafee.com || return 1
     return 0
 }
 # Function to check the specified file against its expected size, checksum and MD5 checksum.
@@ -141,7 +138,7 @@ unset perform_update avvdat_ini download
 [ -d "$tmp_dir" ] || exit_error "directory '$tmp_dir' does not exist."
 [ -x "$install_dir/$UVSCAN_EXE" ] ||
     exit_error "could not find uvscan executable"
-DownloadFile "commonupdater" "avvdat.ini" "ascii" "$tmp_dir" ||
+DownloadFile "commonupdater" "avvdat.ini" "-a" "$tmp_dir" ||
     exit_error "downloading avvdat.ini"
 avvdat_ini="$tmp_dir/avvdat.ini"
 # Did we get avvdat.ini?
@@ -150,10 +147,13 @@ ini_section=AVV-ZIP
 file_list="avvscan.dat:444 avvnames.dat:444 avvclean.dat:444"
 # Get the version of the installed DATs...
 current_version=$(GetCurrentDATVersion "$install_dir/$UVSCAN_EXE" "$UVSCAN_SWITCHES")
-[ -n "$current_version" ] ||
-    exit_error "unable to get currently installed DAT version."
-current_major=$(echo "$current_version" | cut -d. -f-1)
-current_minor=$(echo "$current_version" | cut -d. -f2-)
+if [-n "$current_version"]; then
+    current_major=$(echo "$current_version" | cut -d. -f-1)
+    current_minor=$(echo "$current_version" | cut -d. -f2-)
+else
+    current_major="0"
+    current_minor="0"
+fi
 INISection=$(FindINISection "$ini_section" <$avvdat_ini)
 [ -n "$INISection" ] ||
     exit_error "unable to get section $ini_section from avvdat.ini"
@@ -183,7 +183,7 @@ done
 if [ -n "$perform_update" ]; then
     printf "$prgname: Performing an update ($current_version -> $major_ver.$minor_ver)\n"
     # Download the dat files...
-    DownloadFile "commonupdater$file_path" "$file_name" "bin" "$tmp_dir" ||
+    DownloadFile "commonupdater$file_path" "$file_name" "" "$tmp_dir" ||
         exit_error "downloading '$file_name'"
     download="$tmp_dir/$file_name"
     # Did we get the dat update file?
