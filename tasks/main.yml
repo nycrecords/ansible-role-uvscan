@@ -1,11 +1,13 @@
 ---
 - name: Install pre-requisites
   yum:
-    name:
-      - expect
-      - unzip
-      - ftp
+    name: "{{ packages }}"
     state: present
+  vars:
+    packages:
+      - unzip
+      - lftp
+      - ftp
 
 - name: Create temporary dir for installer.
   file:
@@ -25,10 +27,26 @@
     dest: "/tmp/vscl/"
     remote_src: yes
 
-- name: Install McAfee VSCL
-  shell: 
+- name: Determine if McAfee VSCL is installed
+  command: "/usr/local/bin/uvscan --version"
+  register: uvscan_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install McAfee VSCL  # noqa 301 305
+  shell:
     cmd: ./install-uvscan -y
     chdir: "/tmp/vscl/"
+  when: uvscan_installed is failed
+
+- name: Configure LFTP Proxy
+  template:
+    src: templates/lftp.conf.j2
+    dest: /etc/lftp.conf
+    owner: root
+    group: root
+    mode: '0755'
+  when: ftp_proxy | bool
 
 - name: Copy update script
   template:
@@ -38,9 +56,14 @@
     group: root
     mode: '0755'
 
+- name: Run Update Script to setup initial dat files  # noqa 301 305
+  shell:
+    cmd: /usr/local/uvscan/mcafee_update.sh
+  when: uvscan_installed is failed
+
 - name: Setup Update CronJob
   cron:
     name: "Update McAfee DAT Files"
     minute: "0"
     hour: "3"
-    job: "/usr/local/uvscan/mcafee_update.sh"
+    job: "/usr/local/uvscan/mcafee_update.sh "

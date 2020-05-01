@@ -1,4 +1,5 @@
 ---
 # defaults file for uvscan
-uvscan_download_url: 
+uvscan_download_url:
 uvscan_update_email: "ansible@localhost"
+ftp_proxy:

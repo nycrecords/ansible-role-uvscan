@@ -1,5 +1,6 @@
 import os
 
+import pytest
 import testinfra.utils.ansible_runner
 
 testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
@@ -7,32 +8,22 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
 ).get_hosts("all")
 
 
-def test_java_installed(host):
-    java = host.package("java-1.8.0-openjdk")
+def test_mcafee_vscl_installed(host):
+    uvscan = host.run("/usr/local/bin/uvscan --version")
 
-    assert java.is_installed
-
-
-def test_java_home_set(host):
-    java_home = host.environment()["JAVA_HOME"]
-    assert java_home == "/usr/lib/jvm/jre-1.8.0-openjdk"
+    assert uvscan.rc == 0
 
 
-def test_java_version(host):
-    java_version = host.run("java -version")
-    java_version_stderr = java_version.stderr
+@pytest.mark.parametrize(
+    "dat_file_path",
+    [
+        ("/usr/local/uvscan/avvscan.dat"),
+        ("/usr/local/uvscan/avvnames.dat"),
+        ("/usr/local/uvscan/avvclean.dat"),
+    ],
+)
+def test_mcafee_vscl_dat_files_exist(host, dat_file_path):
+    dat_file = host.file(dat_file_path)
 
-    assert java_version.rc == 0
-    assert 'openjdk version "1.8.0_242"' in java_version_stderr
-    assert "OpenJDK Runtime Environment (build 1.8.0_242-b08)" in java_version_stderr
-    assert (
-        "OpenJDK 64-Bit Server VM (build 25.242-b08, mixed mode)" in java_version_stderr
-    )
-
-def test_solr_active(host):
-    assert host.service("solr").is_running
-
-def test_solr_listening(host):
-    socket = host.socket("tcp://127.0.0.1:8983")
-
-    assert socket.is_listening
+    assert dat_file.exists
+    assert oct(dat_file.mode) == '0o444'
