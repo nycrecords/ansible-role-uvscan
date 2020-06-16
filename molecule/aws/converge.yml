@@ -10,6 +10,9 @@
         - rhui-REGION-rhel-server-rhscl
         - rhui-REGION-rhel-server-debug-rhscl
 
+    # Role: UVScan
+    uvscan_download_url: "{{ lookup('env', 'UVSCAN_DOWNLOAD_URL') }}"
+
   roles:
     - role: nycrecords.yum_config_manager
     - role: ansible-role-uvscan
