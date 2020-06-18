@@ -46,7 +46,7 @@
     owner: root
     group: root
     mode: '0755'
-  when: ftp_proxy | bool
+  when: use_ftp_proxy | bool
 
 - name: Copy update script
   template:

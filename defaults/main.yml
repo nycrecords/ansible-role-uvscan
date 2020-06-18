@@ -3,3 +3,4 @@
 uvscan_download_url:
 uvscan_update_email: "ansible@localhost"
 ftp_proxy:
+use_ftp_proxy: false
